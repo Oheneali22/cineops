@@ -82,4 +82,5 @@ Logs are structured JSON with request and correlation IDs, state transitions, st
 ## Database and migration behavior
 
 `npm run db:migrate` applies ordered SQL files exactly once using an advisory lock and a transaction per migration. Run it before starting new application code. The database holds theatres, releases, distribution jobs, job transition history, heartbeats, and migration history. All domain state is persistent. API and worker are stateless apart from in-memory metrics and in-flight processing. No local file storage is required.
+
 # cineops
