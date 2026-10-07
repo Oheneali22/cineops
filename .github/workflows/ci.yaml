@@ -1,3 +1,14 @@
+name: CineOps CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -19,9 +30,9 @@ jobs:
 
       - name: Lint code
         run: npm run lint
-
-      - name: Run unit tests
-        run: npm test
-
-      - name: Build application
+      
+      - name: Run tests
+        run: npm run test
+      
+      - name: Build project
         run: npm run build
