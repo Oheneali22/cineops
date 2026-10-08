@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Build Docker image
-        run: docker build -t cineops:${{ github.sha }} .
+        run: docker build --pull -t cineops:${{ github.sha }} .
 
       - name: Show built image
         run: docker image ls cineops
