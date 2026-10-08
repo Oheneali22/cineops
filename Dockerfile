@@ -18,13 +18,20 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY package.json package-lock.json ./
 
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev \
+    && npm cache clean --force \
+    && rm -rf /usr/local/lib/node_modules/npm \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx
 
 COPY --from=builder /app/dist ./dist
 COPY migrations ./migrations
 
 USER node
 
-CMD ["npm", "run", "start:api"]
+CMD ["node", "dist/api/main.js"]
