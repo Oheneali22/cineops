@@ -54,3 +54,17 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://cineops:cineops-ci@localhost:5432/cineops_test
         run: npm run test:integration
+
+  container:
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Build Docker image
+        run: docker build -t cineops:${{ github.sha }} .
+
+      - name: Show built image
+        run: docker image ls cineops
