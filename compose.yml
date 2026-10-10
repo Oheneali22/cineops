@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: cineops
+      POSTGRES_PASSWORD: cineops-local-dev
+      POSTGRES_DB: cineops
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cineops -d cineops"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    image: cineops:hardened
+    environment:
+      NODE_ENV: production
+      API_KEY: ${API_KEY}
+      DATABASE_URL: postgres://cineops:cineops-local-dev@postgres:5432/cineops
+    command: ["node", "dist/db/migrate.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: cineops:hardened
+    environment:
+      NODE_ENV: production
+      API_KEY: ${API_KEY}
+      DATABASE_URL: postgres://cineops:cineops-local-dev@postgres:5432/cineops
+      PORT: 3000
+    ports:
+      - "3002:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    image: cineops:hardened
+    environment:
+      NODE_ENV: production
+      API_KEY: ${API_KEY}
+      DATABASE_URL: postgres://cineops:cineops-local-dev@postgres:5432/cineops
+      WORKER_ID: worker-compose-1
+      WORKER_METRICS_PORT: 3001
+    ports:
+      - "3003:3001"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
