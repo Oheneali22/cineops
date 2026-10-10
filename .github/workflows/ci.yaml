@@ -12,6 +12,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:18
@@ -50,6 +51,7 @@ jobs:
 
       - name: Build project
         run: npm run build
+
       - name: Run PostgreSQL integration tests
         env:
           TEST_DATABASE_URL: postgres://cineops:cineops-ci@localhost:5432/cineops_test
@@ -58,6 +60,10 @@ jobs:
   container:
     needs: validate
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout source code
@@ -78,3 +84,25 @@ jobs:
           severity: "CRITICAL,HIGH"
           ignore-unfixed: true
           exit-code: "1"
+
+      - name: Configure AWS credentials
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::942909611186:role/Github_AssumedRole
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
+
+      - name: Push image to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: cineops
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker tag "cineops:${IMAGE_TAG}" "${REGISTRY}/${REPOSITORY}:${IMAGE_TAG}"
+          docker push "${REGISTRY}/${REPOSITORY}:${IMAGE_TAG}"
